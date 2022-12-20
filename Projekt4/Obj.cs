@@ -15,7 +15,7 @@ namespace Projekt4
         public string name;
         public List<Vector4> points;
         public List<Vector3> normalVector;
-        public List<int[]> faces;
+        public List<(int[], int[])> faces;
         public Matrix4x4 modelMatrix = Matrix4x4.Identity;
         public Color color;
 
@@ -33,7 +33,8 @@ namespace Projekt4
         private void loadFile(string filePath)
         {
             points = new List<Vector4>();
-            faces = new List<int[]>();
+            normalVector = new List<Vector3>();
+            faces = new List<(int[], int[])>();
 
             float maxCoord = 0.0f;
 
@@ -55,38 +56,46 @@ namespace Projekt4
                             points.Add(v);
                             break;
                         }
+                    case "vn":
+                        {
+                            Vector3 vn = new Vector3(float.Parse(args[1], CultureInfo.InvariantCulture), float.Parse(args[2], CultureInfo.InvariantCulture), float.Parse(args[3], CultureInfo.InvariantCulture));
+                            vn = Vector3.Normalize(vn);
+                            normalVector.Add(vn);
+                            break;
+                        }
                     case "f":
                         {
-                            int[] tmp = new int[args.Length-1];
+                            (int[], int[]) tmp = (new int[args.Length - 1], new int[args.Length - 1]);
                             for (int i = 1; i < args.Length; i++)
                             {
                                 string[] indices = args[i].Split("/");
-                                tmp[i-1] = int.Parse(indices[0]) - 1;
-                            }
-                            faces.Add(tmp);
-                            break;
+                                tmp.Item1[i - 1] = int.Parse(indices[0]) - 1;
+                                tmp.Item2[i - 1] = int.Parse(indices[2]) - 1;
                         }
+                        faces.Add(tmp);
+                        break;
                 }
             }
-            points = points.Select(v => rescale(0.9f / maxCoord, v)).ToList();
         }
-
-        private void checkMax(Vector4 v, ref float maxCoord)
-        {
-            float max = 0.0f;
-            max = Math.Max(max, v.X);
-            max = Math.Max(max, v.Y);
-            max = Math.Max(max, v.Z);
-            maxCoord = Math.Max(maxCoord, max);
-        }
-
-        private Vector4 rescale(float alpha, Vector4 vec)
-        {
-            vec.X *= alpha;
-            vec.Y *= alpha;
-            vec.Z *= alpha;
-            return vec;
-        }
+        points = points.Select(v => rescale(0.9f / maxCoord, v)).ToList();
     }
+
+    private void checkMax(Vector4 v, ref float maxCoord)
+    {
+        float max = 0.0f;
+        max = Math.Max(max, v.X);
+        max = Math.Max(max, v.Y);
+        max = Math.Max(max, v.Z);
+        maxCoord = Math.Max(maxCoord, max);
+    }
+
+    private Vector4 rescale(float alpha, Vector4 vec)
+    {
+        vec.X *= alpha;
+        vec.Y *= alpha;
+        vec.Z *= alpha;
+        return vec;
+    }
+}
 }
 

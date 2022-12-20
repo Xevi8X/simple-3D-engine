@@ -1,5 +1,6 @@
 using FastBitmapLib;
 using System.Numerics;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace Projekt4
 {
@@ -18,13 +19,22 @@ namespace Projekt4
         Matrix4x4 perspective = Matrix4x4.Identity;
         private bool isRunning = true;
 
+
+        double kd = 0.9;
+        double ks = 0.5;
+        double m = 10;
+
+
+        Vector3 sun = new Vector3(0, 0, 200);
+
+
         public MainForm()
         {
             InitializeComponent();
             view = Matrix4x4.CreateLookAt(cameraPos, Vector3.Zero, Vector3.UnitZ);
             perspective = Matrix4x4.CreatePerspectiveFieldOfView(fov / 180.0f * MathF.PI, ((float)canva.Width) / canva.Height, 1.0f, 3.0f);
-            objs.Add(new Obj(@"torus.obj"));
-            objs.Add(new Obj(@"torus.obj"));
+            objs.Add(new Obj(@"torus2.obj"));
+            objs.Add(new Obj(@"torus2.obj"));
             //objs.Add(new Obj(@"stozek.obj"));
             //objs.Add(new Obj(@"cat.obj"));
             Render();
@@ -45,19 +55,22 @@ namespace Projekt4
             int[] tmp = new int[canvaWidth * canvaHeight];
             float[] zBuffer = Enumerable.Repeat(float.MaxValue, canvaWidth * canvaHeight).ToArray();
 
-            using (Graphics g = Graphics.FromImage(nextBitmap))
+            
+            foreach (var obj in objs)
             {
-                g.Clear(Color.Blue);
-                drawCoords(g);
-                drawInfo(g);
-                foreach (var obj in objs)
-                {
-                    drawObj(g, obj,tmp,canvaWidth, zBuffer);
-                }
+                drawObj( obj, tmp, canvaWidth, zBuffer);
             }
             using (var fastBitmap = nextBitmap.FastLock())
             {
-                fastBitmap.CopyFromArray(tmp);
+                fastBitmap.Clear(Color.Blue);
+                fastBitmap.CopyFromArray(tmp,true);
+            }
+
+            using (Graphics g = Graphics.FromImage(nextBitmap))
+            {
+                drawCoords(g);
+                drawInfo(g);
+
             }
 
             canva.Image?.Dispose();
@@ -80,41 +93,109 @@ namespace Projekt4
             PointF OY = projectPoint( new Vector4(0, size, 0, 1), Matrix4x4.Identity);
             PointF OZ = projectPoint( new Vector4(0, 0, size, 1), Matrix4x4.Identity);
 
-            g.DrawLine(p, O, OX);
-            g.DrawLine(p, O, OY);
-            g.DrawLine(p, O, OZ);
+            g.DrawLine(point, O, OX);
+            g.DrawLine(point, O, OY);
+            g.DrawLine(point, O, OZ);
             */
         }
 
-        void drawObj(Graphics g, Obj obj, int[] tmp, int canvaWidth, float[] zBuffer)
+        void drawObj( Obj obj, int[] tmp, int canvaWidth, float[] zBuffer)
         {
             
 
             Pen p = new Pen(Color.White);
-            foreach (int[] face in obj.faces)
+            foreach ((int[],int[]) face in obj.faces)
             {
-                Vector3[] points = new Vector3[face.Length];
+                Vector3[] points = new Vector3[face.Item1.Length];
                 bool isOK = true;
-                for (int i = 0; i < face.Length; i++)
+                for (int i = 0; i < face.Item1.Length; i++)
                 {
-                    points[i] = projectPoint(obj.points[face[i]], obj.modelMatrix);
+                    points[i] = projectPoint(obj.points[face.Item1[i]], obj.modelMatrix);
                     if (!IsIn(points[i]))
                     {
                         isOK = false;
                         break;
                     }  
                 }
+
+                Color[] colors = { Color.Magenta, Color.Cyan, Color.Yellow };
+                Vector3[] normalVectors = new Vector3[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    normalVectors[i] = Vector3.TransformNormal(obj.normalVector[face.Item2[i]], obj.modelMatrix);
+                    colors[i] = calcColor(obj.color, new Vector3(obj.points[face.Item1[i]].X, obj.points[face.Item1[i]].Y, obj.points[face.Item1[i]].Z), normalVectors[i]);
+                }
+
+
+             
+
                 if (isOK) ForEachPixel(points, (vec, x, y) =>
                 {
-                   
                     Vector3 point = getPoint(vec, x, y);
                     if (point.Z < zBuffer[x + y * canvaWidth])
                     {
                         zBuffer[x + y * canvaWidth] = point.Z;
-                        tmp[x + y * canvaWidth] = obj.color.ToArgb();
+                        //tmp[x + y * canvaWidth] = obj.color.ToArgb();
+                        tmp[x + y * canvaWidth] = interpolateColor(vec, colors, point);
                     }
                 });
             }
+        }
+
+        float myCos(Vector3 v1, Vector3 v2, bool cut = true)
+        {
+            float cos = v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z / v1.Length() / v2.Length();
+            if (cut && cos < 0.0) cos = 0.0f;
+            return cos;
+        }
+
+        private Color calcColor(Color c,Vector3 point, Vector3 normalVector)
+        {
+            double[] objColor = { c.R, c.G, c.B };
+            Vector3 N = normalVector;
+            Vector3 L = sun - N;
+            L = Vector3.Normalize(L);
+            Vector3 R = 2 * myCos(N, L, false) * N - L;
+            double first = kd * myCos(N, L, true);
+            double second = ks * Math.Pow(myCos(N, R, true), m);
+            int[] rgb = new int[3];
+            for (int i = 0; i < 3; i++)
+            {
+                rgb[i] = (int)((first + second) * objColor[i]);
+                if (rgb[i] < 0) rgb[i] = 0;
+                if (rgb[i] > 255) rgb[i] = 255;
+            }
+            Color res = Color.FromArgb(rgb[0], rgb[1], rgb[2]);
+            return res;
+        }
+
+        private double[] barocentricWeigths(Vector3[] f, Vector3 point)
+        {
+            Vector3 A = f[1] - f[0];
+            Vector3 B = f[2] - f[0];
+            Vector3 C = f[2] - f[1];
+            Vector3 D = f[0] - f[2];
+
+            double P = (A * B).Length();
+            double P0 = ((point - f[1]) * C).Length();
+            double P1 = ((point - f[2]) * C).Length();
+            double P2 = ((point - f[0]) * C).Length();
+            double[] res = new double[] { P0 / P, P1 / P, P2 / P };
+            double sum = res[0] + res[1] + res[2];
+            return res.Select(i => i / sum).ToArray();
+        }
+
+        private int interpolateColor(Vector3[] face, Color[] colors, Vector3 point)
+        {
+            double[] weights = barocentricWeigths(face, point);
+            int[] rgb = new int[3];
+            for (int i = 0; i < 3; i++)
+            {
+                rgb[0] += (int)(weights[i] * colors[i].R);
+                rgb[1] += (int)(weights[i] * colors[i].G);
+                rgb[2] += (int)(weights[i] * colors[i].B);
+            }
+            return Color.FromArgb(rgb[0], rgb[1], rgb[2]).ToArgb();
         }
 
         private Vector3 getPoint(Vector3[] face, int x, int y)
