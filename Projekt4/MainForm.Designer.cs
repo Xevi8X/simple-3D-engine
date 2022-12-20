@@ -28,11 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.canva = new System.Windows.Forms.PictureBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.plikToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.otwórzToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.timer = new System.Windows.Forms.Timer(this.components);
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.canva)).BeginInit();
             this.menuStrip1.SuspendLayout();
@@ -85,8 +87,13 @@
             // otwórzToolStripMenuItem
             // 
             this.otwórzToolStripMenuItem.Name = "otwórzToolStripMenuItem";
-            this.otwórzToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.otwórzToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.otwórzToolStripMenuItem.Text = "Otwórz";
+            this.otwórzToolStripMenuItem.Click += new System.EventHandler(this.otwórzToolStripMenuItem_Click);
+            // 
+            // timer
+            // 
+            this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
             // MainForm
             // 
@@ -115,5 +122,6 @@
         private MenuStrip menuStrip1;
         private ToolStripMenuItem plikToolStripMenuItem;
         private ToolStripMenuItem otwórzToolStripMenuItem;
+        private System.Windows.Forms.Timer timer;
     }
 }

@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FastBitmapLib" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="cat.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

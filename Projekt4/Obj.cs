@@ -13,17 +13,26 @@ namespace Projekt4
     public class Obj
     {
         public string name;
-        public List<Vector3> points;
+        public List<Vector4> points;
+        public List<Vector3> normalVector;
         public List<int[]> faces;
+        public Matrix4x4 modelMatrix = Matrix4x4.Identity;
+        public Color color;
+
+        static Random random = new Random();
 
         public Obj(string filePath)
         {
             loadFile(filePath);
+            unchecked
+            {
+                color = Color.FromArgb((int)0xFF000000 + (random.Next(0xFFFFFF) & 0x7F7F7F));
+            }
         }
 
         private void loadFile(string filePath)
         {
-            points = new List<Vector3>();
+            points = new List<Vector4>();
             faces = new List<int[]>();
 
             float maxCoord = 0.0f;
@@ -41,7 +50,7 @@ namespace Projekt4
                         }
                     case "v":
                         {
-                            Vector3 v = new Vector3(float.Parse(args[1], CultureInfo.InvariantCulture), float.Parse(args[2], CultureInfo.InvariantCulture), float.Parse(args[3], CultureInfo.InvariantCulture));
+                            Vector4 v = new Vector4(float.Parse(args[1], CultureInfo.InvariantCulture), float.Parse(args[2], CultureInfo.InvariantCulture), float.Parse(args[3], CultureInfo.InvariantCulture), 1.0f);
                             checkMax(v, ref maxCoord);
                             points.Add(v);
                             break;
@@ -62,7 +71,7 @@ namespace Projekt4
             points = points.Select(v => rescale(0.9f / maxCoord, v)).ToList();
         }
 
-        private void checkMax(Vector3 v, ref float maxCoord)
+        private void checkMax(Vector4 v, ref float maxCoord)
         {
             float max = 0.0f;
             max = Math.Max(max, v.X);
@@ -71,7 +80,7 @@ namespace Projekt4
             maxCoord = Math.Max(maxCoord, max);
         }
 
-        private Vector3 rescale(float alpha, Vector3 vec)
+        private Vector4 rescale(float alpha, Vector4 vec)
         {
             vec.X *= alpha;
             vec.Y *= alpha;
