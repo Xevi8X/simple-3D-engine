@@ -18,16 +18,23 @@ namespace Projekt4
         public List<(int[], int[])> faces;
         public Matrix4x4 modelMatrix = Matrix4x4.Identity;
         public Color color;
+        public Func<float, Matrix4x4> modelMatrixFunc;
 
         static Random random = new Random();
 
-        public Obj(string filePath)
+        public Obj(string filePath) : this(filePath,Color.Pink,(t) => Matrix4x4.Identity)
         {
-            loadFile(filePath);
             unchecked
             {
                 color = Color.FromArgb((int)0xFF000000 + (random.Next(0xFFFFFF) & 0x7F7F7F));
             }
+        }
+
+        public Obj(string filePath,Color c, Func<float, Matrix4x4> modelMatrixFunc)
+        {
+            loadFile(filePath);
+            color = c;
+            this.modelMatrixFunc = modelMatrixFunc;
         }
 
         private void loadFile(string filePath)
@@ -77,7 +84,7 @@ namespace Projekt4
                 }
             }
         }
-        points = points.Select(v => rescale(0.9f / maxCoord, v)).ToList();
+        //points = points.Select(v => rescale(0.9f / maxCoord, v)).ToList();
     }
 
     private void checkMax(Vector4 v, ref float maxCoord)
