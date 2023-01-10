@@ -12,31 +12,57 @@ namespace Projekt4
         public float[] color;
         private Vector3 source;
         private Vector3 directory;
-        private float cosAngle;
+        Func<float, Vector3>? sourceFunc;
+        Func<float, Vector3>? directoryFunc;
+        private float m;
 
 
-        public Light(Vector3 source, Vector3 directory, float cosAngle)
+        public Light(Vector3 source, Vector3 directory, float m)
         {
             this.source = source;
             this.directory = directory;
-            this.cosAngle = cosAngle;
+            this.m = m;
             color = new float[3] { 1.0f, 1.0f, 1.0f };
         }
 
-        public Light(Vector3 source, Vector3 directory, float cosAngle,float R,float G,float B)
+        public Light(Func<float,Vector3> sourceFunc, Func<float, Vector3> directoryFunc, float m)
+        {
+            this.source = sourceFunc(0.0f);
+            this.directory = directoryFunc(0.0f);
+            this.sourceFunc = sourceFunc;
+            this.directoryFunc = directoryFunc;
+            this.m = m;
+            color = new float[3] { 1.0f, 1.0f, 1.0f };
+        }
+
+        public Light(Vector3 source, Vector3 directory, float m,float R,float G,float B)
         {
             this.source = source;
             this.directory = directory;
-            this.cosAngle = cosAngle;
+            this.sourceFunc = (_) => source;
+            this.directoryFunc = (_) => directory;
+            this.m = m;
             color = new float[3] { R, G, B };
         }
 
-        public (bool,Vector3) isInRange(Vector3 point)
+        public (bool, Vector3, float[]) isInRange(Vector3 point)
         {
             Vector3 L = source - point;
             L = Vector3.Normalize(L);
-            if (Vector3.Dot(-L, directory) > cosAngle) return (true, L);
-            return (false, Vector3.Zero);
+            float cos = Vector3.Dot(-L, directory);
+            if (cos > 0)
+            {
+                cos = MathF.Pow(cos, m);
+                float[] res = color.Select(x => x * cos).ToArray();
+                return (true, L, res);
+            }
+                
+            return (false, Vector3.Zero, new float[3]);
+        }
+        public void update(float time)
+        {
+            if(sourceFunc != null) this.source = sourceFunc(time);
+            if (directoryFunc != null) this.directory = directoryFunc(time);
         }
     }
 }

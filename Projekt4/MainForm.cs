@@ -9,6 +9,9 @@ namespace Projekt4
         const float virtualX = 1.0f;
         const float virtualY = 1.0f;
 
+        float fogMax = 1.5f;
+        float fogMin = 1.42f;
+
         List<Obj> objs = new List<Obj>();
         float fov = 60.0f;
 
@@ -25,13 +28,13 @@ namespace Projekt4
         float ks = 0.5f;
         float m = 10;
 
-        Vector3 sun = new Vector3(0, 0, 50);
-
         List<Light> lightsSources = new List<Light>();
 
         float time = 0.0f;
         private int cameraIndex = -1;
         private bool carCamera;
+
+        private bool dayNight = true;
 
         public MainForm()
         {
@@ -55,6 +58,14 @@ namespace Projekt4
             }));
 
             lightsSources.Add(new Light(new Vector3(0, 0, 50), new Vector3(0, 0, -1),-1));
+            lightsSources.Add(new Light(
+               (t) => Vector3.Transform(new Vector3(-2, 1, 1f), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateTranslation(0.0f, -7.0f, 1.0f) * Matrix4x4.CreateRotationZ(-2.0f * t)),
+               (t) => Vector3.Transform(new Vector3(-1, 0, 0), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateRotationZ(-2.0f * t)),
+               6f));
+            lightsSources.Add(new Light(
+               (t) => Vector3.Transform(new Vector3(-2, -1, 1f), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateTranslation(0.0f, -7.0f, 1.0f) * Matrix4x4.CreateRotationZ(-2.0f * t)),
+               (t) => Vector3.Transform(new Vector3(-1, 0, 0), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateRotationZ(-2.0f * t)),
+               6f));
 
             timer.Interval = 100;
             timer.Start();
@@ -70,16 +81,19 @@ namespace Projekt4
             int canvaWidth = canva.Width;
             int canvaHeight = canva.Height;
             int[] tmp = new int[canvaWidth * canvaHeight];
-            float[] zBuffer = Enumerable.Repeat(float.MaxValue, canvaWidth * canvaHeight).ToArray();
+            float[] zBuffer = Enumerable.Repeat(fogMax, canvaWidth * canvaHeight).ToArray();
 
 
             Parallel.ForEach(objs, (obj) =>
             {
                 drawObj(obj, tmp, canvaWidth, zBuffer);
             });
+
+            drawFog(tmp, zBuffer);
+
             using (var fastBitmap = nextBitmap.FastLock())
             {
-                fastBitmap.Clear(Color.Blue);
+                fastBitmap.Clear(Color.White);
                 fastBitmap.CopyFromArray(tmp, true);
             }
 
@@ -92,10 +106,22 @@ namespace Projekt4
             canva.Image = (Image)nextBitmap;
         }
 
+        private void drawFog(int[] tmp, float[] zBuffer)
+        {
+            for (int i = 0; i < zBuffer.Length; i++)
+            {
+                if (zBuffer[i] < fogMax && zBuffer[i] > fogMin)
+                {
+                    int alpha = 255 - (int) (255.0 * (zBuffer[i] - fogMin) / (fogMax - fogMin));
+                    tmp[i] += alpha << 24;
+                }
+            }
+        }
+
         private void drawInfo(Graphics g)
         {
             string s = $"Camera pos:\nX:{String.Format("{0:0.00}", cameraPos.X)}\nY:{String.Format("{0:0.00}", cameraPos.Y)}\nZ:{String.Format("{0:0.00}", cameraPos.Z)}";
-            g.DrawString(s, new Font("Arial", 8), new SolidBrush(Color.White), canva.Width - 90, 30);
+            g.DrawString(s, new Font("Arial", 8), new SolidBrush(Color.Black), canva.Width - 90, 30);
         }
 
         void drawObj(Obj obj, int[] tmp, int canvaWidth, float[] zBuffer)
@@ -159,7 +185,7 @@ namespace Projekt4
             foreach (var lights in lightsSources)
             {
                 Vector3 N = normalVector;
-                (bool ok, Vector3 L) = lights.isInRange(point);
+                (bool ok, Vector3 L,float[] color) = lights.isInRange(point);
                 if (!ok) continue;
                 Vector3 R = 2 * myCos(N, L, false) * N - L;
                 float first = kd * myCos(N, L, true);
@@ -167,7 +193,7 @@ namespace Projekt4
                 float second = ks * MathF.Pow(myCos(Observer, R, true), m);
                 for (int i = 0; i < 3; i++)
                 {
-                    rgb[i] += (int)((first + second) * objColor[i] * lights.color[i]);
+                    rgb[i] += (int)((first + second) * objColor[i] * color[i]);
                     if (rgb[i] < 0) rgb[i] = 0;
                     if (rgb[i] > 255) rgb[i] = 255;
                 }
@@ -302,6 +328,11 @@ namespace Projekt4
                 case 't':
                     carCamera = !carCamera;
                     break;
+                case 'g':
+                    dayNight = !dayNight;
+                    if(dayNight) lightsSources[0].color =new float[] {1.0f,1.0f,1.0f };
+                    else lightsSources[0].color = new float[] { 0.3f, 0.3f, 0.3f };
+                    break;
                 case 'z':
                     fov -= 10.0f;
                     if (fov < 10.0f) fov = 10.0f;
@@ -323,7 +354,10 @@ namespace Projekt4
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            
+            foreach (var light in lightsSources)
+            {
+                light.update(time);
+            }
             foreach (var obj in objs)
             {
                 obj.modelMatrix = obj.modelMatrixFunc(time);
