@@ -1,4 +1,5 @@
 using FastBitmapLib;
+using System.Net.Http.Headers;
 using System.Numerics;
 using static System.Reflection.Metadata.BlobBuilder;
 
@@ -9,8 +10,10 @@ namespace Projekt4
         const float virtualX = 1.0f;
         const float virtualY = 1.0f;
 
-        float fogMax = 1.5f;
-        float fogMin = 1.42f;
+        float fogMax = 1.6f;
+        float fogMin = 1.5f;
+
+        Shading shading = Shading.Phong;
 
         List<Obj> objs = new List<Obj>();
         float fov = 60.0f;
@@ -23,7 +26,7 @@ namespace Projekt4
         Matrix4x4 perspective = Matrix4x4.Identity;
         private bool isRunning = true;
 
-        float ka = 0.1f;
+        float ka = 0.0f;
         float kd = 0.9f;
         float ks = 0.5f;
         float m = 10;
@@ -54,18 +57,23 @@ namespace Projekt4
 
             objs.Add(new Obj(@"Models/cybertruck.obj", Color.Silver, (t) =>
             {
-                return Matrix4x4.CreateRotationY(0.2f*MathF.Sin(10*t)) * Matrix4x4.CreateTranslation(0.0f, -7.0f, 1.0f) * Matrix4x4.CreateRotationZ(-2.0f * t);
+                return Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateTranslation(0.0f, -7.0f, 1.0f) * Matrix4x4.CreateRotationZ(-2.0f * t);
             }));
+
+            //objs.Add(new Obj(@"Models/sfera.obj", Color.White, (t) =>
+            //{
+            //    return Matrix4x4.CreateTranslation(9.0f,9.0f, 7.0f);
+            //}));
 
             lightsSources.Add(new Light(new Vector3(0, 0, 50), new Vector3(0, 0, -1),-1));
             lightsSources.Add(new Light(
                (t) => Vector3.Transform(new Vector3(-2, 1, 1f), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateTranslation(0.0f, -7.0f, 1.0f) * Matrix4x4.CreateRotationZ(-2.0f * t)),
                (t) => Vector3.Transform(new Vector3(-1, 0, 0), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateRotationZ(-2.0f * t)),
-               6f));
+               3f));
             lightsSources.Add(new Light(
                (t) => Vector3.Transform(new Vector3(-2, -1, 1f), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateTranslation(0.0f, -7.0f, 1.0f) * Matrix4x4.CreateRotationZ(-2.0f * t)),
                (t) => Vector3.Transform(new Vector3(-1, 0, 0), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateRotationZ(-2.0f * t)),
-               6f));
+               3f));
 
             timer.Interval = 100;
             timer.Start();
@@ -86,21 +94,33 @@ namespace Projekt4
 
             Parallel.ForEach(objs, (obj) =>
             {
-                drawObj(obj, tmp, canvaWidth, zBuffer);
+                switch(shading)
+                {
+                    case Shading.Gouraud:
+                        drawObjGouraud(obj, tmp, canvaWidth, zBuffer);
+                    break;
+                    case Shading.Phong:
+                        drawObjPhong(obj, tmp, canvaWidth, zBuffer);
+                    break;
+                    case Shading.constant:
+                        drawObjConst(obj, tmp, canvaWidth, zBuffer);
+                    break;
+                }
             });
 
             drawFog(tmp, zBuffer);
 
             using (var fastBitmap = nextBitmap.FastLock())
             {
-                fastBitmap.Clear(Color.White);
+                if(dayNight)fastBitmap.Clear(Color.White);
+                else fastBitmap.Clear(Color.Black);
                 fastBitmap.CopyFromArray(tmp, true);
             }
 
-            using (Graphics g = Graphics.FromImage(nextBitmap))
-            {
-                drawInfo(g);
-            }
+           // using (Graphics g = Graphics.FromImage(nextBitmap))
+           // {
+           //     drawInfo(g);
+           // }
 
             canva.Image?.Dispose();
             canva.Image = (Image)nextBitmap;
@@ -108,13 +128,22 @@ namespace Projekt4
 
         private void drawFog(int[] tmp, float[] zBuffer)
         {
+            int backColor = dayNight ? Color.White.ToArgb() : Color.Black.ToArgb();
             for (int i = 0; i < zBuffer.Length; i++)
             {
                 if (zBuffer[i] < fogMax && zBuffer[i] > fogMin)
                 {
-                    int alpha = 255 - (int) (255.0 * (zBuffer[i] - fogMin) / (fogMax - fogMin));
-                    tmp[i] += alpha << 24;
+                    float alpha = (zBuffer[i] - fogMin) / (fogMax - fogMin);
+                    tmp[i] = blend(tmp[i], backColor, alpha);
                 }
+            }
+
+            int blend(int color,int backColor, float amount)
+            {
+                int r = ((int)(((color & 0xFF0000)>>16) * (1 - amount) + ((backColor & 0xFF0000) >> 16) * amount))<<16;
+                int g = ((int)(((color & 0xFF00) >> 8) * (1 - amount) + ((backColor & 0xFF00) >> 8) * amount)) << 8;
+                int b = (int)((color & 0xFF) * (1 - amount) + (backColor & 0xFF) * amount);
+                return (-16777216 | r | g | b);
             }
         }
 
@@ -124,11 +153,8 @@ namespace Projekt4
             g.DrawString(s, new Font("Arial", 8), new SolidBrush(Color.Black), canva.Width - 90, 30);
         }
 
-        void drawObj(Obj obj, int[] tmp, int canvaWidth, float[] zBuffer)
+        void drawObjGouraud(Obj obj, int[] tmp, int canvaWidth, float[] zBuffer)
         {
-
-
-            Pen p = new Pen(Color.White);
             Parallel.ForEach(obj.faces, (face) =>
             {
                 Vector3[] points = new Vector3[face.Item1.Length];
@@ -143,16 +169,13 @@ namespace Projekt4
                     }
                 }
 
-                Color[] colors = { Color.Magenta, Color.Cyan, Color.Yellow };
+                Color[] colors = new Color[3];
                 Vector3[] normalVectors = new Vector3[3];
                 for (int i = 0; i < 3; i++)
                 {
                     normalVectors[i] = Vector3.TransformNormal(obj.normalVector[face.Item2[i]], obj.modelMatrix);
-                    colors[i] = calcColor(obj.color,Vector3.Transform( new Vector3(obj.points[face.Item1[i]].X, obj.points[face.Item1[i]].Y, obj.points[face.Item1[i]].Z),obj.modelMatrix), normalVectors[i]);
+                    colors[i] = calcColor(obj.color,Vector4.Transform(obj.points[face.Item1[i]] ,obj.modelMatrix).toVec3(), normalVectors[i]);
                 }
-
-
-
 
                 if (isOK) ForEachPixel(points, (vec, x, y) =>
                 {
@@ -160,23 +183,107 @@ namespace Projekt4
                     if (point.Z < zBuffer[x + y * canvaWidth])
                     {
                         zBuffer[x + y * canvaWidth] = point.Z;
-                        //tmp[x + y * canvaWidth] = obj.color.ToArgb();
                         tmp[x + y * canvaWidth] = interpolateColor(vec, colors, point);
                     }
                 });
             });
         }
 
+        void drawObjPhong(Obj obj, int[] tmp, int canvaWidth, float[] zBuffer)
+        {
+            Parallel.ForEach(obj.faces, (face) =>
+            {
+                Vector3[] points = new Vector3[face.Item1.Length];
+                bool isOK = true;
+                for (int i = 0; i < face.Item1.Length; i++)
+                {
+                    points[i] = projectPoint(obj.points[face.Item1[i]], obj.modelMatrix);
+                    if (!IsIn(points[i]))
+                    {
+                        isOK = false;
+                        break;
+                    }
+                }
+
+
+                Vector4[] rotatedPoints = face.Item1
+                .Select((i) => obj.points[i])
+                .Select((v) => Vector4.Transform(v, obj.modelMatrix))
+                .ToArray();
+
+                Vector3[] normals = face.Item2
+                .Select((i) => obj.normalVector[i])
+                .Select((v) => Vector3.TransformNormal(v, obj.modelMatrix))
+                .ToArray();
+
+                if (isOK) ForEachPixel(points, (vec, x, y) =>
+                {
+                    Console.WriteLine(points);
+                    Vector3 point = getPoint(vec, x, y);
+                    if (point.Z < zBuffer[x + y * canvaWidth])
+                    {
+                        zBuffer[x + y * canvaWidth] = point.Z;
+                        Vector3 localNormal = interpolateVector(vec, normals, point);
+                        Vector3 localPoint = interpolateVector(vec, rotatedPoints.Select(v => v.toVec3()).ToArray(), point);
+                        tmp[x + y * canvaWidth] = calcColor(obj.color, localPoint, localNormal).ToArgb();
+                    }
+                });
+            });
+        }
+
+        void drawObjConst(Obj obj, int[] tmp, int canvaWidth, float[] zBuffer)
+        {
+            Parallel.ForEach(obj.faces, (face) =>
+            {
+                Vector3[] points = new Vector3[face.Item1.Length];
+                bool isOK = true;
+                for (int i = 0; i < face.Item1.Length; i++)
+                {
+                    points[i] = projectPoint(obj.points[face.Item1[i]], obj.modelMatrix);
+                    if (!IsIn(points[i]))
+                    {
+                        isOK = false;
+                        break;
+                    }
+                }
+                Vector3[] realPoints = face.Item1
+                .Select((i) => obj.points[i].toVec3())
+                .ToArray();
+                Vector3 centralpoint = centralPoint(realPoints);
+                Vector3[] normals = face.Item2
+                .Select((i) => obj.normalVector[i])
+                .Select((v) => Vector3.TransformNormal(v, obj.modelMatrix))
+                .ToArray();
+
+                Vector3 normalInCenter = interpolateVector(realPoints, normals, centralpoint);
+
+                int constColor = calcColor(obj.color, Vector3.Transform(centralpoint,obj.modelMatrix), normalInCenter).ToArgb();
+
+                if (isOK) ForEachPixel(points, (vec, x, y) =>
+                {
+                    Vector3 point = getPoint(vec, x, y);
+                    if (point.Z < zBuffer[x + y * canvaWidth])
+                    {
+                        zBuffer[x + y * canvaWidth] = point.Z;
+                        tmp[x + y * canvaWidth] = constColor;
+                    }
+                });
+            });
+        }
+
+        
+
         float myCos(Vector3 v1, Vector3 v2, bool cut = true)
         {
             float cos = v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z / v1.Length() / v2.Length();
             if (cut && cos < 0.0) cos = 0.0f;
+            if (cos > 1.1f) throw new Exception("cos > 1");
             return cos;
         }
 
-        private Color calcColor(Color c, Vector3 point, Vector3 normalVector)
+        private Color calcColor(Color obj_c, Vector3 point, Vector3 normalVector)
         {
-            float[] objColor = { c.R, c.G, c.B };
+            float[] objColor = { obj_c.R, obj_c.G, obj_c.B };
             int[] rgb = new int[3];
             for (int i = 0; i < 3; i++)
             {
@@ -208,25 +315,29 @@ namespace Projekt4
             return carCamera ? carCameraPos: cameraPos;
         }
 
-        private double[] barocentricWeigths(Vector3[] f, Vector3 point)
+        private float[] barocentricWeigths(Vector3[] f, Vector3 point)
         {
             Vector3 A = f[1] - f[0];
             Vector3 B = f[2] - f[0];
             Vector3 C = f[2] - f[1];
-            Vector3 D = f[0] - f[2];
 
-            double P = (A * B).Length();
-            double P0 = ((point - f[1]) * C).Length();
-            double P1 = ((point - f[2]) * C).Length();
-            double P2 = ((point - f[0]) * C).Length();
-            double[] res = new double[] { P0 / P, P1 / P, P2 / P };
-            double sum = res[0] + res[1] + res[2];
+
+            float P = Vector3.Cross(A,B).Length();
+            float P0 = Vector3.Cross((point - f[1]), C).Length();
+            float P1 = Vector3.Cross((point - f[0]), B).Length();
+            float P2 = Vector3.Cross((point - f[0]), A).Length();
+            float[] res = new float[] { P0 / P, P1 / P, P2 / P };
+            float sum = res[0] + res[1] + res[2];
+            if (sum < 0.8 || sum > 2)
+            {
+                //throw new Exception("WTF?");
+            }
             return res.Select(i => i / sum).ToArray();
         }
 
         private int interpolateColor(Vector3[] face, Color[] colors, Vector3 point)
         {
-            double[] weights = barocentricWeigths(face, point);
+            float[] weights = barocentricWeigths(face, point);
             int[] rgb = new int[3];
             for (int i = 0; i < 3; i++)
             {
@@ -236,6 +347,25 @@ namespace Projekt4
             }
             return Color.FromArgb(rgb[0], rgb[1], rgb[2]).ToArgb();
         }
+
+        private Vector3 centralPoint(Vector3[] points)
+        {
+            Vector3 avg = Vector3.Zero;
+            foreach (var item in points)
+            {
+                avg += item;
+            }
+            return avg / points.Length;
+        }
+
+        private Vector3 interpolateVector(Vector3[] face, Vector3[] vectors, Vector3 point)
+        {
+            float[] weights = barocentricWeigths(face, point);
+
+            return weights[0]*vectors[0] + weights[1]*vectors[1] + weights[2]*vectors[2];
+        }
+
+
 
         private Vector3 getPoint(Vector3[] face, int x, int y)
         {
@@ -331,7 +461,7 @@ namespace Projekt4
                 case 'g':
                     dayNight = !dayNight;
                     if(dayNight) lightsSources[0].color =new float[] {1.0f,1.0f,1.0f };
-                    else lightsSources[0].color = new float[] { 0.3f, 0.3f, 0.3f };
+                    else lightsSources[0].color = new float[] { 0.0f, 0.0f, 0.0f };
                     break;
                 case 'z':
                     fov -= 10.0f;
@@ -343,8 +473,6 @@ namespace Projekt4
                     break;
                 case 'p':
                     isRunning = !isRunning;
-                    if (isRunning) timer.Start();
-                    else timer.Stop();
                     break;
             }
 
@@ -362,7 +490,7 @@ namespace Projekt4
             {
                 obj.modelMatrix = obj.modelMatrixFunc(time);
             }
-            time += timer.Interval / 1000.0f;
+            if(isRunning) time += timer.Interval / 1000.0f;
             setViewMatrix(time);
             Render();
         }
@@ -399,13 +527,19 @@ namespace Projekt4
             }
         }
 
+        enum Shading
+        {
+            Gouraud, Phong, constant
+        }
+
+
         class AET
         {
             public int y_max;
-            public double x;
-            public double jedenprzezm;
+            public float x;
+            public float jedenprzezm;
 
-            public AET(int y_max, double x, double jedenprzezm)
+            public AET(int y_max, float x, float jedenprzezm)
             {
                 this.y_max = y_max;
                 this.x = x;
@@ -429,25 +563,43 @@ namespace Projekt4
                     int index = Array.IndexOf(vectorArr, vertex);
                     int before = index == 0 ? vectorArr.Length - 1 : index - 1;
                     int after = (index + 1) % vectorArr.Length;
-                    if (vectorArr[before].Y >= y)
+
+                    if (vectorArr[before].Y >= y) 
                     {
+                        float jedenprzezm = (vectorArr[before].X - vertex.X) / (vectorArr[before].Y - vertex.Y);
                         aet.Add(
                             new AET(
                                 (int)vectorArr[before].Y,
                                 vertex.X,
-                                ((double)(vectorArr[before].X - vertex.X)) / (vectorArr[before].Y - vertex.Y)
-                                )
+                               jedenprzezm)
                             );
+                        if (Math.Abs(vectorArr[after].Y - vertex.Y) < 1.0f)
+                        {
+                            int min = (int)vertex.X;
+                            int max = (int)vectorArr[after].X;
+                            if (min > max) (min, max) = (max, min);
+                            for (; min <= max; min++) action(vectorArr, min, (int)vertex.Y);
+                            for (; min <= max; min++) action(vectorArr, min, (int)vectorArr[after].Y);
+                        }
+
                     }
                     if (vectorArr[after].Y >= y)
                     {
+                        float jedenprzezm = (vectorArr[after].X - vertex.X) / (vectorArr[after].Y - vertex.Y);
                         aet.Add(
                             new AET(
                                 (int)vectorArr[after].Y,
                                 vertex.X,
-                                ((double)(vectorArr[after].X - vertex.X)) / (vectorArr[after].Y - vertex.Y)
-                                )
+                               jedenprzezm)
                             );
+                        if(Math.Abs(vectorArr[after].Y - vertex.Y) <1.0f)
+                        {
+                            int min = (int)vertex.X;
+                            int max = (int)vectorArr[after].X;
+                            if (min > max) (min, max) = (max, min);
+                            for (; min <= max; min++) action(vectorArr, min, (int)vertex.Y);
+                            for (; min <= max; min++) action(vectorArr, min, (int)vectorArr[after].Y);
+                        }
                     }
                 }
 
@@ -459,14 +611,18 @@ namespace Projekt4
                     int x = changePoints[0];
                     foreach (var change in changePoints)
                     {
-                        int ago = 0;
+                        bool isMove = false;
                         while (x < change)
                         {
-                            ago++;
+                            isMove = true;
                             if (paint) action(vectorArr, x, y);
                             x++;
                         }
-                        if (ago > 1) paint = !paint;
+                        if (isMove)
+                        {
+                            paint = !paint;
+                            isMove = false;
+                        }
                     }
                     aet.RemoveAll(x => x.y_max <= y);
                     for (int i = 0; i < aet.Count; i++)
@@ -476,6 +632,24 @@ namespace Projekt4
                 }
                 y++;
             }
+        }
+
+        private void gouraud_btn_CheckedChanged(object sender, EventArgs e)
+        {
+            shading = Shading.Gouraud;
+            Render();
+        }
+
+        private void phong_btn_CheckedChanged(object sender, EventArgs e)
+        {
+            shading = Shading.Phong;
+            Render();
+        }
+
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+            shading = Shading.constant;
+            Render();
         }
     }
 }

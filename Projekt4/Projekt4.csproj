@@ -31,6 +31,9 @@
     <None Update="Models\stozek.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Models\test.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Models\torus.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
