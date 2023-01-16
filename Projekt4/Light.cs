@@ -14,6 +14,7 @@ namespace Projekt4
         private Vector3 directory;
         Func<float, Vector3>? sourceFunc;
         Func<float, Vector3>? directoryFunc;
+        Obj? owner;
         private float m;
 
 
@@ -25,7 +26,7 @@ namespace Projekt4
             color = new float[3] { 1.0f, 1.0f, 1.0f };
         }
 
-        public Light(Func<float,Vector3> sourceFunc, Func<float, Vector3> directoryFunc, float m)
+        public Light(Func<float,Vector3> sourceFunc, Func<float, Vector3> directoryFunc, float m, Obj? owner = null)
         {
             this.source = sourceFunc(0.0f);
             this.directory = directoryFunc(0.0f);
@@ -33,6 +34,7 @@ namespace Projekt4
             this.directoryFunc = directoryFunc;
             this.m = m;
             color = new float[3] { 1.0f, 1.0f, 1.0f };
+            this.owner = owner;
         }
 
         public Light(Vector3 source, Vector3 directory, float m,float R,float G,float B)
@@ -62,7 +64,12 @@ namespace Projekt4
         public void update(float time)
         {
             if(sourceFunc != null) this.source = sourceFunc(time);
-            if (directoryFunc != null) this.directory = directoryFunc(time);
+            if(directoryFunc != null) this.directory = directoryFunc(time);
+            if (owner != null)
+            {
+                this.source = Vector3.Transform(this.source, owner.modelMatrix);
+                this.directory = Vector3.TransformNormal(this.directory, owner.modelMatrix);
+            }
         }
     }
 }

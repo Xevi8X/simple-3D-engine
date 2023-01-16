@@ -10,10 +10,10 @@ namespace Projekt4
         const float virtualX = 1.0f;
         const float virtualY = 1.0f;
 
-        float fogMax = 1.6f;
-        float fogMin = 1.5f;
+        float fogMax = 1.5f;
+        float fogMin = 1.4f;
 
-        Shading shading = Shading.Phong;
+        Shading shading = Shading.constant;
 
         List<Obj> objs = new List<Obj>();
         float fov = 60.0f;
@@ -22,11 +22,10 @@ namespace Projekt4
         Vector3 carCameraPos = Vector3.Zero;
 
         Matrix4x4 view = Matrix4x4.Identity;
-        Matrix4x4 model = Matrix4x4.Identity;
         Matrix4x4 perspective = Matrix4x4.Identity;
         private bool isRunning = true;
 
-        float ka = 0.0f;
+        float ka = 0.1f;
         float kd = 0.9f;
         float ks = 0.5f;
         float m = 10;
@@ -55,9 +54,18 @@ namespace Projekt4
                 return Matrix4x4.CreateRotationY(-0.2f) * Matrix4x4.CreateTranslation(6.0f, 0.0f, 7.0f) * Matrix4x4.CreateRotationZ(t);
             }));
 
-            objs.Add(new Obj(@"Models/cybertruck.obj", Color.Silver, (t) =>
+
+            var cybertruck = new Obj(@"Models/cybertruck.obj", Color.Silver, (t) =>
             {
                 return Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateTranslation(0.0f, -7.0f, 1.0f) * Matrix4x4.CreateRotationZ(-2.0f * t);
+            });
+
+            objs.Add(cybertruck);
+
+
+            objs.Add(new Obj(@"Models/ludzik.obj", Color.Aqua, (t) =>
+            {
+                return Matrix4x4.CreateTranslation(0.0f, 0.0f, 0.8f);
             }));
 
             //objs.Add(new Obj(@"Models/sfera.obj", Color.White, (t) =>
@@ -67,13 +75,13 @@ namespace Projekt4
 
             lightsSources.Add(new Light(new Vector3(0, 0, 50), new Vector3(0, 0, -1),-1));
             lightsSources.Add(new Light(
-               (t) => Vector3.Transform(new Vector3(-2, 1, 1f), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateTranslation(0.0f, -7.0f, 1.0f) * Matrix4x4.CreateRotationZ(-2.0f * t)),
-               (t) => Vector3.Transform(new Vector3(-1, 0, 0), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateRotationZ(-2.0f * t)),
-               3f));
+               (t) => new Vector3(-2, 1, 1f),
+               (t) => new Vector3(-1, 0, 0),
+               3f, cybertruck));
             lightsSources.Add(new Light(
-               (t) => Vector3.Transform(new Vector3(-2, -1, 1f), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateTranslation(0.0f, -7.0f, 1.0f) * Matrix4x4.CreateRotationZ(-2.0f * t)),
-               (t) => Vector3.Transform(new Vector3(-1, 0, 0), Matrix4x4.CreateRotationY(0.2f * MathF.Sin(10 * t)) * Matrix4x4.CreateRotationZ(-2.0f * t)),
-               3f));
+               (t) => new Vector3(-2, -1, 1f),
+               (t) => new Vector3(-1, 0, 0),
+               3f, cybertruck));
 
             timer.Interval = 100;
             timer.Start();
@@ -289,20 +297,20 @@ namespace Projekt4
             {
                 rgb[i] = (int)(ka * objColor[i]);
             }
-            foreach (var lights in lightsSources)
+            for (int i = dayNight ? 0 : 1; i < lightsSources.Count; i++)
             {
                 Vector3 N = normalVector;
-                (bool ok, Vector3 L,float[] color) = lights.isInRange(point);
+                (bool ok, Vector3 L,float[] color) = lightsSources[i].isInRange(point);
                 if (!ok) continue;
                 Vector3 R = 2 * myCos(N, L, false) * N - L;
                 float first = kd * myCos(N, L, true);
                 Vector3 Observer = Vector3.Normalize(getCameraPos() - point);
                 float second = ks * MathF.Pow(myCos(Observer, R, true), m);
-                for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
                 {
-                    rgb[i] += (int)((first + second) * objColor[i] * color[i]);
-                    if (rgb[i] < 0) rgb[i] = 0;
-                    if (rgb[i] > 255) rgb[i] = 255;
+                    rgb[j] += (int)((first + second) * objColor[j] * color[j]);
+                    if (rgb[j] < 0) rgb[j] = 0;
+                    if (rgb[j] > 255) rgb[j] = 255;
                 }
             }
 
@@ -365,8 +373,6 @@ namespace Projekt4
             return weights[0]*vectors[0] + weights[1]*vectors[1] + weights[2]*vectors[2];
         }
 
-
-
         private Vector3 getPoint(Vector3[] face, int x, int y)
         {
             float det = (face[1].Y - face[2].Y) * (face[0].X - face[2].X) + (face[2].X - face[1].X) * (face[0].Y - face[2].Y);
@@ -391,8 +397,6 @@ namespace Projekt4
                 perspective);
             return virtualToCanva(projection(vecCanva));
         }
-
-        //bool inBound nie rysowac ca³ego trojkata
 
         Vector3 virtualToCanva(Vector3 virtualPos)
         {
@@ -482,15 +486,16 @@ namespace Projekt4
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            foreach (var light in lightsSources)
-            {
-                light.update(time);
-            }
+
             foreach (var obj in objs)
             {
                 obj.modelMatrix = obj.modelMatrixFunc(time);
             }
-            if(isRunning) time += timer.Interval / 1000.0f;
+            foreach (var light in lightsSources)
+            {
+                light.update(time);
+            }
+            if (isRunning) time += timer.Interval / 1000.0f;
             setViewMatrix(time);
             Render();
         }
@@ -650,6 +655,46 @@ namespace Projekt4
         {
             shading = Shading.constant;
             Render();
+        }
+
+        private void dayBtn_CheckedChanged(object sender, EventArgs e)
+        {
+            dayNight = true;
+        }
+
+        private void nightBtn_CheckedChanged(object sender, EventArgs e)
+        {
+            dayNight = false;
+        }
+
+        private void fromTrackBar_Scroll(object sender, EventArgs e)
+        {
+            fogMin = 1.0f + fromTrackBar.Value / 100.0f;
+        }
+
+        private void toTrackBar_Scroll(object sender, EventArgs e)
+        {
+            fogMax = 1.0f + toTrackBar.Value / 100.0f;
+        }
+
+        private void trackBar3_Scroll(object sender, EventArgs e)
+        {
+            ka = trackBar3.Value / 10f;
+        }
+
+        private void trackBar1_Scroll(object sender, EventArgs e)
+        {
+            kd = trackBar1.Value / 10f;
+        }
+
+        private void trackBar4_Scroll(object sender, EventArgs e)
+        {
+            ks = trackBar4.Value / 10f;
+        }
+
+        private void trackBar2_Scroll(object sender, EventArgs e)
+        {
+            m = trackBar2.Value;
         }
     }
 }
