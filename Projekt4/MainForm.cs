@@ -31,10 +31,11 @@ namespace Projekt4
         float m = 10;
 
         List<Light> lightsSources = new List<Light>();
+        List<MovingCamera> movingCameras = new List<MovingCamera>();
 
         float time = 0.0f;
-        private int cameraIndex = -1;
-        private bool carCamera;
+        private int cameraIndex = 1;
+        private bool isMovingCamera = true;
 
         private bool dayNight = true;
 
@@ -62,11 +63,11 @@ namespace Projekt4
 
             objs.Add(cybertruck);
 
-
-            objs.Add(new Obj(@"Models/ludzik.obj", Color.Aqua, (t) =>
+            var ludzik = new Obj(@"Models/ludzik.obj", Color.Aqua, (t) =>
             {
                 return Matrix4x4.CreateTranslation(0.0f, 0.0f, 0.8f);
-            }));
+            });
+            objs.Add(ludzik);
 
             //objs.Add(new Obj(@"Models/sfera.obj", Color.White, (t) =>
             //{
@@ -82,6 +83,9 @@ namespace Projekt4
                (t) => new Vector3(-2, -1, 1f),
                (t) => new Vector3(-1, 0, 0),
                3f, cybertruck));
+
+            movingCameras.Add(new MovingCamera(cybertruck, new Vector3(10.0f, 0.0f, 5.0f), new Vector3(-30.0f, 0.0f, 0.0f)));
+            movingCameras.Add(new MovingCamera(ludzik, new Vector3(0.0f, -10.0f, 5.0f), new Vector3(00.0f, 30.0f, 0.0f)));
 
             timer.Interval = 100;
             timer.Start();
@@ -320,7 +324,7 @@ namespace Projekt4
 
         private Vector3 getCameraPos()
         {
-            return carCamera ? carCameraPos: cameraPos;
+            return isMovingCamera ? movingCameras[cameraIndex].cameraPos: cameraPos;
         }
 
         private float[] barocentricWeigths(Vector3[] f, Vector3 point)
@@ -455,13 +459,6 @@ namespace Projekt4
                     cameraIndex++;
                     if (cameraIndex == objs.Count) cameraIndex = -1;
                     break;
-                case 'f':
-                    cameraIndex--;
-                    if (cameraIndex < -1) cameraIndex = objs.Count-1;
-                    break;
-                case 't':
-                    carCamera = !carCamera;
-                    break;
                 case 'g':
                     dayNight = !dayNight;
                     if(dayNight) lightsSources[0].color =new float[] {1.0f,1.0f,1.0f };
@@ -502,20 +499,15 @@ namespace Projekt4
 
         private void setViewMatrix(float time)
         {
-            if (!carCamera)
+            if (!isMovingCamera)
             {
-                Vector3 target = Vector3.Zero;
-                if (cameraIndex >= 0)
-                {
-                    target = Vector3.Transform(Vector3.Zero, objs[cameraIndex].modelMatrix);
-                }
+                Vector3 target = Vector3.Transform(Vector3.Zero, objs[cameraIndex].modelMatrix);
                 view = Matrix4x4.CreateLookAt(cameraPos, target, Vector3.UnitZ);
             }
             else
             {
-                carCameraPos = Vector3.Transform(new Vector3(10.0f, 0.0f, 5.0f), objs[2].modelMatrix);
-                Vector3 lookAt = Vector3.Transform(new Vector3(-30.0f, 0.0f, 0.0f), objs[2].modelMatrix);
-                view = Matrix4x4.CreateLookAt(carCameraPos, lookAt, Vector3.UnitZ);
+                movingCameras[cameraIndex].update();
+                view = movingCameras[cameraIndex].View;
             }
         }
 
