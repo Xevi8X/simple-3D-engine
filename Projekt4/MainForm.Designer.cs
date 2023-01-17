@@ -54,6 +54,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.trackBar3 = new System.Windows.Forms.TrackBar();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.nextCam = new System.Windows.Forms.Button();
             this.prevCam = new System.Windows.Forms.Button();
             this.movingCam = new System.Windows.Forms.RadioButton();
@@ -72,6 +73,7 @@
             this.plikToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.otwórzToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timer = new System.Windows.Forms.Timer(this.components);
+            this.label8 = new System.Windows.Forms.Label();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.canva)).BeginInit();
             this.tableLayoutPanel2.SuspendLayout();
@@ -85,6 +87,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar3)).BeginInit();
             this.groupBox4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.tableLayoutPanel3.SuspendLayout();
             this.groupBox5.SuspendLayout();
             this.menuStrip1.SuspendLayout();
@@ -115,7 +118,6 @@
             this.canva.Size = new System.Drawing.Size(704, 560);
             this.canva.TabIndex = 0;
             this.canva.TabStop = false;
-            this.canva.Resize += new System.EventHandler(this.canva_Resize);
             // 
             // tableLayoutPanel2
             // 
@@ -383,6 +385,8 @@
             // 
             // groupBox4
             // 
+            this.groupBox4.Controls.Add(this.label8);
+            this.groupBox4.Controls.Add(this.numericUpDown1);
             this.groupBox4.Controls.Add(this.nextCam);
             this.groupBox4.Controls.Add(this.prevCam);
             this.groupBox4.Controls.Add(this.movingCam);
@@ -396,6 +400,34 @@
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Kamera i ruch";
             this.groupBox4.Enter += new System.EventHandler(this.groupBox4_Enter);
+            // 
+            // numericUpDown1
+            // 
+            this.numericUpDown1.Increment = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.numericUpDown1.Location = new System.Drawing.Point(48, 98);
+            this.numericUpDown1.Maximum = new decimal(new int[] {
+            170,
+            0,
+            0,
+            0});
+            this.numericUpDown1.Minimum = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.numericUpDown1.Name = "numericUpDown1";
+            this.numericUpDown1.Size = new System.Drawing.Size(38, 23);
+            this.numericUpDown1.TabIndex = 8;
+            this.numericUpDown1.Value = new decimal(new int[] {
+            60,
+            0,
+            0,
+            0});
+            this.numericUpDown1.ValueChanged += new System.EventHandler(this.numericUpDown1_ValueChanged);
             // 
             // nextCam
             // 
@@ -590,6 +622,15 @@
             // 
             this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(6, 100);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(32, 15);
+            this.label8.TabIndex = 9;
+            this.label8.Text = "FOV:";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -600,7 +641,6 @@
             this.Name = "MainForm";
             this.Text = "Projekt4";
             this.SizeChanged += new System.EventHandler(this.MainForm_SizeChanged);
-            this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.MainForm_KeyPress);
             this.tableLayoutPanel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.canva)).EndInit();
             this.tableLayoutPanel2.ResumeLayout(false);
@@ -618,6 +658,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.trackBar3)).EndInit();
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
             this.tableLayoutPanel3.ResumeLayout(false);
             this.groupBox5.ResumeLayout(false);
             this.menuStrip1.ResumeLayout(false);
@@ -672,5 +713,7 @@
         private GroupBox groupBox5;
         private Button button2;
         private Button button1;
+        private NumericUpDown numericUpDown1;
+        private Label label8;
     }
 }
