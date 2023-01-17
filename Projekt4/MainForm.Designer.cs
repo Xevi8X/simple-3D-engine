@@ -53,6 +53,21 @@
             this.trackBar1 = new System.Windows.Forms.TrackBar();
             this.label4 = new System.Windows.Forms.Label();
             this.trackBar3 = new System.Windows.Forms.TrackBar();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.nextCam = new System.Windows.Forms.Button();
+            this.prevCam = new System.Windows.Forms.Button();
+            this.movingCam = new System.Windows.Forms.RadioButton();
+            this.constCam = new System.Windows.Forms.RadioButton();
+            this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
+            this.upBtn = new System.Windows.Forms.Button();
+            this.rightBtn = new System.Windows.Forms.Button();
+            this.backBtn = new System.Windows.Forms.Button();
+            this.leftBtn = new System.Windows.Forms.Button();
+            this.ccwBtn = new System.Windows.Forms.Button();
+            this.cwBtn = new System.Windows.Forms.Button();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.plikToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.otwórzToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -69,6 +84,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.trackBar4)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar3)).BeginInit();
+            this.groupBox4.SuspendLayout();
+            this.tableLayoutPanel3.SuspendLayout();
+            this.groupBox5.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -106,20 +124,23 @@
             this.tableLayoutPanel2.Controls.Add(this.groupBox1, 0, 0);
             this.tableLayoutPanel2.Controls.Add(this.groupBox2, 0, 1);
             this.tableLayoutPanel2.Controls.Add(this.groupBox3, 0, 2);
+            this.tableLayoutPanel2.Controls.Add(this.groupBox4, 0, 3);
+            this.tableLayoutPanel2.Controls.Add(this.groupBox5, 0, 4);
             this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel2.Location = new System.Drawing.Point(713, 3);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
-            this.tableLayoutPanel2.RowCount = 8;
+            this.tableLayoutPanel2.RowCount = 5;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel2.Size = new System.Drawing.Size(244, 560);
             this.tableLayoutPanel2.TabIndex = 1;
+            this.tableLayoutPanel2.Paint += new System.Windows.Forms.PaintEventHandler(this.tableLayoutPanel2_Paint);
             // 
             // groupBox1
             // 
@@ -360,6 +381,185 @@
             this.trackBar3.Value = 1;
             this.trackBar3.Scroll += new System.EventHandler(this.trackBar3_Scroll);
             // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.nextCam);
+            this.groupBox4.Controls.Add(this.prevCam);
+            this.groupBox4.Controls.Add(this.movingCam);
+            this.groupBox4.Controls.Add(this.constCam);
+            this.groupBox4.Controls.Add(this.tableLayoutPanel3);
+            this.groupBox4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBox4.Location = new System.Drawing.Point(3, 324);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(238, 127);
+            this.groupBox4.TabIndex = 4;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Kamera i ruch";
+            this.groupBox4.Enter += new System.EventHandler(this.groupBox4_Enter);
+            // 
+            // nextCam
+            // 
+            this.nextCam.Location = new System.Drawing.Point(48, 72);
+            this.nextCam.Name = "nextCam";
+            this.nextCam.Size = new System.Drawing.Size(34, 23);
+            this.nextCam.TabIndex = 7;
+            this.nextCam.Text = "⇒";
+            this.nextCam.UseVisualStyleBackColor = true;
+            this.nextCam.Click += new System.EventHandler(this.nextCam_Click);
+            // 
+            // prevCam
+            // 
+            this.prevCam.Location = new System.Drawing.Point(6, 72);
+            this.prevCam.Name = "prevCam";
+            this.prevCam.Size = new System.Drawing.Size(34, 23);
+            this.prevCam.TabIndex = 6;
+            this.prevCam.Text = "⇐";
+            this.prevCam.UseVisualStyleBackColor = true;
+            this.prevCam.Click += new System.EventHandler(this.prevCam_Click);
+            // 
+            // movingCam
+            // 
+            this.movingCam.AutoSize = true;
+            this.movingCam.Location = new System.Drawing.Point(6, 47);
+            this.movingCam.Name = "movingCam";
+            this.movingCam.Size = new System.Drawing.Size(76, 19);
+            this.movingCam.TabIndex = 5;
+            this.movingCam.Text = "Ruchoma";
+            this.movingCam.UseVisualStyleBackColor = true;
+            this.movingCam.CheckedChanged += new System.EventHandler(this.movingCam_CheckedChanged);
+            // 
+            // constCam
+            // 
+            this.constCam.AutoSize = true;
+            this.constCam.Checked = true;
+            this.constCam.Location = new System.Drawing.Point(6, 22);
+            this.constCam.Name = "constCam";
+            this.constCam.Size = new System.Drawing.Size(50, 19);
+            this.constCam.TabIndex = 4;
+            this.constCam.TabStop = true;
+            this.constCam.Text = "Stała";
+            this.constCam.UseVisualStyleBackColor = true;
+            this.constCam.CheckedChanged += new System.EventHandler(this.constCam_CheckedChanged);
+            // 
+            // tableLayoutPanel3
+            // 
+            this.tableLayoutPanel3.ColumnCount = 3;
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel3.Controls.Add(this.upBtn, 1, 0);
+            this.tableLayoutPanel3.Controls.Add(this.rightBtn, 2, 1);
+            this.tableLayoutPanel3.Controls.Add(this.backBtn, 1, 2);
+            this.tableLayoutPanel3.Controls.Add(this.leftBtn, 0, 1);
+            this.tableLayoutPanel3.Controls.Add(this.ccwBtn, 2, 0);
+            this.tableLayoutPanel3.Controls.Add(this.cwBtn, 0, 0);
+            this.tableLayoutPanel3.Location = new System.Drawing.Point(132, 22);
+            this.tableLayoutPanel3.Name = "tableLayoutPanel3";
+            this.tableLayoutPanel3.RowCount = 3;
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel3.Size = new System.Drawing.Size(100, 100);
+            this.tableLayoutPanel3.TabIndex = 3;
+            // 
+            // upBtn
+            // 
+            this.upBtn.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.upBtn.Location = new System.Drawing.Point(36, 3);
+            this.upBtn.Name = "upBtn";
+            this.upBtn.Size = new System.Drawing.Size(27, 27);
+            this.upBtn.TabIndex = 0;
+            this.upBtn.Text = "↑";
+            this.upBtn.UseVisualStyleBackColor = true;
+            this.upBtn.Click += new System.EventHandler(this.upBtn_Click);
+            // 
+            // rightBtn
+            // 
+            this.rightBtn.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.rightBtn.Location = new System.Drawing.Point(69, 36);
+            this.rightBtn.Name = "rightBtn";
+            this.rightBtn.Size = new System.Drawing.Size(28, 27);
+            this.rightBtn.TabIndex = 1;
+            this.rightBtn.Text = "→";
+            this.rightBtn.UseVisualStyleBackColor = true;
+            this.rightBtn.Click += new System.EventHandler(this.rightBtn_Click);
+            // 
+            // backBtn
+            // 
+            this.backBtn.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.backBtn.Location = new System.Drawing.Point(36, 69);
+            this.backBtn.Name = "backBtn";
+            this.backBtn.Size = new System.Drawing.Size(27, 28);
+            this.backBtn.TabIndex = 2;
+            this.backBtn.Text = "↓";
+            this.backBtn.UseVisualStyleBackColor = true;
+            this.backBtn.Click += new System.EventHandler(this.backBtn_Click);
+            // 
+            // leftBtn
+            // 
+            this.leftBtn.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.leftBtn.Location = new System.Drawing.Point(3, 36);
+            this.leftBtn.Name = "leftBtn";
+            this.leftBtn.Size = new System.Drawing.Size(27, 27);
+            this.leftBtn.TabIndex = 3;
+            this.leftBtn.Text = "←";
+            this.leftBtn.UseVisualStyleBackColor = true;
+            this.leftBtn.Click += new System.EventHandler(this.leftBtn_Click);
+            // 
+            // ccwBtn
+            // 
+            this.ccwBtn.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ccwBtn.Location = new System.Drawing.Point(69, 3);
+            this.ccwBtn.Name = "ccwBtn";
+            this.ccwBtn.Size = new System.Drawing.Size(28, 27);
+            this.ccwBtn.TabIndex = 4;
+            this.ccwBtn.Text = "↻";
+            this.ccwBtn.UseVisualStyleBackColor = true;
+            this.ccwBtn.Click += new System.EventHandler(this.ccwBtn_Click);
+            // 
+            // cwBtn
+            // 
+            this.cwBtn.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cwBtn.Location = new System.Drawing.Point(3, 3);
+            this.cwBtn.Name = "cwBtn";
+            this.cwBtn.Size = new System.Drawing.Size(27, 27);
+            this.cwBtn.TabIndex = 5;
+            this.cwBtn.Text = "↺";
+            this.cwBtn.UseVisualStyleBackColor = true;
+            this.cwBtn.Click += new System.EventHandler(this.cwBtn_Click);
+            // 
+            // groupBox5
+            // 
+            this.groupBox5.Controls.Add(this.button2);
+            this.groupBox5.Controls.Add(this.button1);
+            this.groupBox5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBox5.Location = new System.Drawing.Point(3, 457);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(238, 100);
+            this.groupBox5.TabIndex = 5;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "Sterowanie swiatłem";
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(13, 55);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(27, 28);
+            this.button2.TabIndex = 3;
+            this.button2.Text = "↓";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(13, 22);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(27, 27);
+            this.button1.TabIndex = 1;
+            this.button1.Text = "↑";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -416,6 +616,10 @@
             ((System.ComponentModel.ISupportInitialize)(this.trackBar4)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar3)).EndInit();
+            this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
+            this.tableLayoutPanel3.ResumeLayout(false);
+            this.groupBox5.ResumeLayout(false);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -453,5 +657,20 @@
         private TrackBar trackBar1;
         private Label label4;
         private TrackBar trackBar3;
+        private TableLayoutPanel tableLayoutPanel3;
+        private Button upBtn;
+        private Button rightBtn;
+        private Button backBtn;
+        private Button leftBtn;
+        private Button ccwBtn;
+        private Button cwBtn;
+        private GroupBox groupBox4;
+        private Button nextCam;
+        private Button prevCam;
+        private RadioButton movingCam;
+        private RadioButton constCam;
+        private GroupBox groupBox5;
+        private Button button2;
+        private Button button1;
     }
 }

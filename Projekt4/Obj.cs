@@ -7,6 +7,7 @@ using System.Net;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace Projekt4
 {
@@ -18,7 +19,7 @@ namespace Projekt4
         public List<(int[], int[])> faces;
         public Matrix4x4 modelMatrix = Matrix4x4.Identity;
         public Color color;
-        public Func<float, Matrix4x4> modelMatrixFunc;
+        public Func<float, Matrix4x4>? modelMatrixFunc;
 
         static Random random = new Random();
 
@@ -35,6 +36,13 @@ namespace Projekt4
             loadFile(filePath);
             color = c;
             this.modelMatrixFunc = modelMatrixFunc;
+        }
+
+        public Obj(string filePath, Color c,  Matrix4x4 modelMatrix)
+        {
+            loadFile(filePath);
+            color = c;
+            this.modelMatrix = modelMatrix;
         }
 
         private void loadFile(string filePath)
@@ -84,10 +92,24 @@ namespace Projekt4
                 }
             }
         }
-        //points = points.Select(v => rescale(0.9f / maxCoord, v)).ToList();
+            //points = points.Select(v => rescale(0.9f / maxCoord, v)).ToList();
     }
 
-    private void checkMax(Vector4 v, ref float maxCoord)
+    public void update(float time)
+    {
+        if(modelMatrixFunc != null) modelMatrix = modelMatrixFunc(time);
+    }
+
+    public void rotate(Matrix4x4 transform)
+    {
+        modelMatrix =  transform * modelMatrix;
+    }
+    public void move(Matrix4x4 transform)
+    {
+       modelMatrix = modelMatrix* transform;
+    }
+
+        private void checkMax(Vector4 v, ref float maxCoord)
     {
         float max = 0.0f;
         max = Math.Max(max, v.X);

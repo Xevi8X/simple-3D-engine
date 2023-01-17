@@ -19,7 +19,6 @@ namespace Projekt4
         float fov = 60.0f;
 
         Vector3 cameraPos = new Vector3(12f, 12f, 10f);
-        Vector3 carCameraPos = Vector3.Zero;
 
         Matrix4x4 view = Matrix4x4.Identity;
         Matrix4x4 perspective = Matrix4x4.Identity;
@@ -34,8 +33,14 @@ namespace Projekt4
         List<MovingCamera> movingCameras = new List<MovingCamera>();
 
         float time = 0.0f;
-        private int cameraIndex = 1;
-        private bool isMovingCamera = true;
+        private int cameraIndex = 0;
+        private bool isMovingCamera = false;
+        private Obj movingObject;
+        float moveStep = 0.5f;
+        float angleStep = 0.1f;
+        float acctualAngle = 0.0f;
+
+        private Light controlledLight;
 
         private bool dayNight = true;
 
@@ -63,10 +68,7 @@ namespace Projekt4
 
             objs.Add(cybertruck);
 
-            var ludzik = new Obj(@"Models/ludzik.obj", Color.Aqua, (t) =>
-            {
-                return Matrix4x4.CreateTranslation(0.0f, 0.0f, 0.8f);
-            });
+            var ludzik = new Obj(@"Models/ludzik.obj", Color.Aqua, Matrix4x4.CreateTranslation(0.0f, 0.0f, 0.8f));
             objs.Add(ludzik);
 
             //objs.Add(new Obj(@"Models/sfera.obj", Color.White, (t) =>
@@ -83,9 +85,17 @@ namespace Projekt4
                (t) => new Vector3(-2, -1, 1f),
                (t) => new Vector3(-1, 0, 0),
                3f, cybertruck));
+            controlledLight = new Light(
+               (t) => new Vector3(0f, 0, 1f),
+               (t) => new Vector3(0f, 1f, 0f),
+               7f, ludzik);
+
+            lightsSources.Add(controlledLight);
 
             movingCameras.Add(new MovingCamera(cybertruck, new Vector3(10.0f, 0.0f, 5.0f), new Vector3(-30.0f, 0.0f, 0.0f)));
             movingCameras.Add(new MovingCamera(ludzik, new Vector3(0.0f, -10.0f, 5.0f), new Vector3(00.0f, 30.0f, 0.0f)));
+
+            movingObject = ludzik;
 
             timer.Interval = 100;
             timer.Start();
@@ -486,7 +496,7 @@ namespace Projekt4
 
             foreach (var obj in objs)
             {
-                obj.modelMatrix = obj.modelMatrixFunc(time);
+                obj.update(time);
             }
             foreach (var light in lightsSources)
             {
@@ -687,6 +697,92 @@ namespace Projekt4
         private void trackBar2_Scroll(object sender, EventArgs e)
         {
             m = trackBar2.Value;
+        }
+
+        private void upBtn_Click(object sender, EventArgs e)
+        {
+            movingObject.move(
+                Matrix4x4.CreateRotationZ(-acctualAngle) * Matrix4x4.CreateTranslation(0f, moveStep, 0f) * Matrix4x4.CreateRotationZ(acctualAngle)
+                );
+        }
+
+        private void backBtn_Click(object sender, EventArgs e)
+        {
+            movingObject.move(
+                Matrix4x4.CreateRotationZ(-acctualAngle) * Matrix4x4.CreateTranslation(0f, -moveStep, 0f) * Matrix4x4.CreateRotationZ(acctualAngle)
+                );
+        }
+
+        private void rightBtn_Click(object sender, EventArgs e)
+        {
+            movingObject.move(
+                Matrix4x4.CreateRotationZ(-acctualAngle) * Matrix4x4.CreateTranslation( moveStep,0f, 0f) * Matrix4x4.CreateRotationZ(acctualAngle)
+                );
+        }
+
+        private void leftBtn_Click(object sender, EventArgs e)
+        {
+            movingObject.move(
+                Matrix4x4.CreateRotationZ(-acctualAngle)*Matrix4x4.CreateTranslation(-moveStep, 0f, 0f)* Matrix4x4.CreateRotationZ(acctualAngle)
+                );
+        }
+
+        private void ccwBtn_Click(object sender, EventArgs e)
+        {
+            acctualAngle -= angleStep;
+            movingObject.rotate(Matrix4x4.CreateRotationZ(-angleStep));
+        }
+
+        private void cwBtn_Click(object sender, EventArgs e)
+        {
+            acctualAngle += angleStep;
+            movingObject.rotate(Matrix4x4.CreateRotationZ(angleStep));
+        }
+
+        private void tableLayoutPanel2_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void groupBox4_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void constCam_CheckedChanged(object sender, EventArgs e)
+        {
+            cameraIndex = 0;
+            isMovingCamera = false;
+        }
+
+        private void movingCam_CheckedChanged(object sender, EventArgs e)
+        {
+            cameraIndex = 0;
+            isMovingCamera = true;
+        }
+
+        private void prevCam_Click(object sender, EventArgs e)
+        {
+            int limit = isMovingCamera ? movingCameras.Count()-1 : objs.Count() - 1;
+            if (limit == 0) throw new Exception("Error!");
+            cameraIndex = cameraIndex == 0 ? limit : cameraIndex - 1;
+        }
+
+        private void nextCam_Click(object sender, EventArgs e)
+        {
+            int limit = isMovingCamera ? movingCameras.Count() - 1 : objs.Count() - 1;
+            if (limit == 0) throw new Exception("Error!");
+            cameraIndex = cameraIndex == limit ? 0 : cameraIndex + 1;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            controlledLight.control(Matrix4x4.CreateRotationX(angleStep));
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            controlledLight.control(Matrix4x4.CreateRotationX(-angleStep));
         }
     }
 }

@@ -15,6 +15,7 @@ namespace Projekt4
         Func<float, Vector3>? sourceFunc;
         Func<float, Vector3>? directoryFunc;
         Obj? owner;
+        Matrix4x4 controlable;
         private float m;
 
 
@@ -26,7 +27,7 @@ namespace Projekt4
             color = new float[3] { 1.0f, 1.0f, 1.0f };
         }
 
-        public Light(Func<float,Vector3> sourceFunc, Func<float, Vector3> directoryFunc, float m, Obj? owner = null)
+        public Light(Func<float,Vector3> sourceFunc, Func<float, Vector3> directoryFunc, float m, Obj? owner = null, Matrix4x4? controlable = null)
         {
             this.source = sourceFunc(0.0f);
             this.directory = directoryFunc(0.0f);
@@ -35,6 +36,7 @@ namespace Projekt4
             this.m = m;
             color = new float[3] { 1.0f, 1.0f, 1.0f };
             this.owner = owner;
+            this.controlable = controlable == null ? Matrix4x4.Identity : controlable.Value;
         }
 
         public Light(Vector3 source, Vector3 directory, float m,float R,float G,float B)
@@ -68,8 +70,13 @@ namespace Projekt4
             if (owner != null)
             {
                 this.source = Vector3.Transform(this.source, owner.modelMatrix);
-                this.directory = Vector3.TransformNormal(this.directory, owner.modelMatrix);
+                this.directory = Vector3.Transform(Vector3.TransformNormal(this.directory, owner.modelMatrix),controlable);
             }
+        }
+
+        public void control(Matrix4x4 transform)
+        {
+            controlable = transform * controlable;
         }
     }
 }
